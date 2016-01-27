@@ -140,8 +140,24 @@ class ApproveMe_Controller extends SI_Controller {
 	}
 
 	public static function store_doc_id() {
+		if ( apply_filters( 'si_approveme_use_transient', false ) ) {
+			self::store_transient();
+		}
 		if ( ! headers_sent() ) {
 			setcookie( self::COOKIE, get_the_id(), time() + ( 60 * 60 ), COOKIEPATH, COOKIE_DOMAIN );
+		}
+	}
+
+	public static function get_transient() {
+		$cache_key = '_si_approveme_transient_'.get_the_id().$_SERVER['REMOTE_ADDR'];
+		return get_transient( $cache_key );
+	}
+
+	public static function store_transient() {
+		$transient_id = self::get_transient();
+		if ( ! $transient_id ) {
+			$cache_key = '_si_approveme_transient_'.get_the_id().$_SERVER['REMOTE_ADDR'];
+			set_transient( $cache_key, get_the_id(), 60 * 15 );
 		}
 	}
 
@@ -191,8 +207,7 @@ class ApproveMe_Controller extends SI_Controller {
 		if ( '' === $default ) {
 			if ( SI_Estimate::POST_TYPE === get_post_type( $doc_id ) ) {
 				$default = ApproveMe_Settings::get_agreement_doc_estimates();
-			}
-			else {
+			} else {
 				$default = ApproveMe_Settings::get_agreement_doc();
 			}
 		}
@@ -326,5 +341,4 @@ class ApproveMe_Controller extends SI_Controller {
 	public static function addons_view_path() {
 		return SA_ADDON_APPROVEME_PATH . '/views/';
 	}
-
 }
